@@ -1,0 +1,36 @@
+dataset_name: datasets/common_voice_17
+eval_dataset_name: datasets/fleurs
+model_name_or_path: open_sonar/speech/models/pretrained/sonar_speech
+dataset_config_name: clean
+train_split_name: train.100
+eval_split_name: validation
+output_dir: "./checkpoints/sonar_speech"
+preprocessing_num_workers: 32
+# length_column_name: lengths
+# group_by_length: true
+overwrite_output_dir: true
+num_train_epochs: 5
+per_device_train_batch_size: 16
+per_device_eval_batch_size: 16
+gradient_accumulation_steps: 1
+
+
+learning_rate: 3.e-4
+warmup_steps: 4000
+specific_parameters: ["pooling"]
+specific_learning_rate: 1.e-3
+
+
+text_column_name: sentence
+eval_strategy: steps
+save_steps: 100
+eval_steps: 100
+logging_steps: 100
+save_total_limit: 1
+gradient_checkpointing: true
+fp16: true
+
+predict_with_generate: true
+do_train: true
+do_eval: true
+do_lower_case: true

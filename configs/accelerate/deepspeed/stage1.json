@@ -1,0 +1,17 @@
+{
+  "zero_optimization": {
+    "stage": 1
+  },
+  "bf16": {
+    "enabled": "auto"
+  },
+  "fp16": {
+    "enabled": "auto",
+    "hysteresis": 1,
+    "loss_scale": 0,
+    "initial_scale_power": 16
+  },
+  "gradient_clipping": "auto",
+  "gradient_accumulation_steps": "auto",
+  "train_batch_size": "auto"
+}

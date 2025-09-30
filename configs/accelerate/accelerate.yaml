@@ -1,0 +1,6 @@
+compute_environment: LOCAL_MACHINE
+distributed_type: MULTI_GPU
+same_network: true
+rdzv_backend: c10d
+mixed_precision: fp16
+# dynamo_backend: false

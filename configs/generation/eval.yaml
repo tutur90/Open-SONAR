@@ -1,0 +1,59 @@
+model_name_or_path: checkpoints/sonar_mini_sd_v3/checkpoint-50000
+# tokenizer_name: facebook/nllb-200-distilled-600M
+output_dir: checkpoints/sonar_mini_sd
+overwrite_output_dir: true
+per_device_train_batch_size: 32
+per_device_eval_batch_size: 128
+source_lang: eng_Latn
+target_lang: fra_Latn
+do_train: false
+do_predict: true
+do_eval: false
+train_file: ./datasets/nllb/final/*.parquet
+validation_file: ./datasets/flores200/flores_200_dev_paired.parquet
+test_file: ./datasets/flores200/flores_200_devtest_paired.parquet
+xsim_eval_file: ./datasets/flores200/flores_200_dev.parquet
+xsim_test_file: ./datasets/flores200/flores_200_devtest.parquet
+dataset_streaming: true
+overwrite_cache: false
+semantic_decompression: 16
+
+predict_with_generate: true
+
+disable_tqdm: false
+max_source_length: 280
+max_target_length: 280
+generation_max_length: 280
+include_for_metrics: "inputs loss"
+num_beams: 1
+predict_num_beams: 5
+
+prediction_loss_only: false
+
+generation_kwargs:
+  do_sample: false
+  renormalize_logits: true
+  min_length: 1
+  # no_repeat_ngram_size: 4
+  early_stopping: true
+
+# dataloader_num_workers: 3
+dataloader_drop_last: false
+dataloader_pin_memory : true
+# dataloader_prefetch_factor: 3
+
+# eval_accumulation_steps : 1
+# eval_do_concat_batches : false
+
+fp16: true
+
+max_eval_samples: 1000
+max_predict_samples: 10000  
+
+accelerator_config:
+  split_batches: false
+  dispatch_batches: false
+  even_batches: true
+  use_seedable_sampler: true
+  non_blocking: true
+

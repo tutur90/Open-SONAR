@@ -1,0 +1,47 @@
+model_name_or_path: facebook/nllb-200-3.3B
+tokenizer_name: facebook/nllb-200-3.3B
+output_dir: checkpoints/backtranslate
+overwrite_output_dir: true
+per_device_eval_batch_size: 32
+source_lang: eng_Latn
+target_lang: fra_Latn
+do_train: false
+do_predict: true
+do_eval: false
+# max_predict_samples: 10000
+dataset_name: openlanguagedata/oldi_seed
+dataset_streaming: true
+
+# dataloader_num_workers: 15
+
+predict_with_generate: true
+disable_tqdm: false
+max_source_length: 512
+max_target_length: 512
+generation_max_length: 512
+include_for_metrics: "inputs loss"
+
+
+num_beams: 5
+predict_num_beams: 5
+
+
+prediction_loss_only: false
+
+generation_kwargs:
+  do_sample: false
+  # renormalize_logits: true
+  min_length: 1
+  # no_repeat_ngram_size: 4
+  early_stopping: true
+
+overwrite_cache: true
+prediction_loss_only: false    
+dataloader_drop_last: false
+
+accelerator_config:
+  split_batches: false
+  dispatch_batches: false
+  even_batches: true
+  use_seedable_sampler: true
+  non_blocking: false

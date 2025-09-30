@@ -1,0 +1,7 @@
+compute_environment: LOCAL_MACHINE
+deepspeed_config:
+  deepspeed_multinode_launcher: standard
+  deepspeed_config_file: configs/accelerate/deepspeed/stage3.json
+distributed_type: DEEPSPEED
+same_network: true
+rdzv_backend: c10d

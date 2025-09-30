@@ -1,0 +1,69 @@
+run_name: sonar_mini_5k
+
+
+# === Modèle ===
+model_name_or_path: facebook/nllb-200-distilled-600M
+output_dir: checkpoints/sonar_mini
+overwrite_output_dir: true
+
+
+# deepspeed: configs/deepspeed_config.json
+
+# === Données ===
+source_lang: eng_Latn
+target_lang: fra_Latn
+train_file: datasets/nllb/*.parquet
+validation_file: datasets/flores200/flores_200_dev_paired.parquet
+test_file: datasets/flores200/flores_200_devtest_paired.parquet
+overwrite_cache: false
+dataset_streaming: true
+
+# === Entraînement ===
+do_train: true
+per_device_train_batch_size: 48 # x 2 to have the real batch size
+per_device_eval_batch_size: 128
+total_batch_size: 5000 # x 2 to have the real batch size
+# gradient_accumulation_steps: 16
+max_steps: 100000
+save_steps: 100
+eval_delay: 2000
+eval_steps: 100
+eval_strategy: steps
+prediction_loss_only: true
+load_best_model_at_end: true
+metric_for_best_model: loss
+greater_is_better: false
+disable_tqdm: false
+max_source_length: 256
+max_target_length: 256
+gradient_checkpointing: false
+dataloader_num_workers: 0
+ddp_find_unused_parameters: false
+logging_steps: 100
+save_total_limit: 5
+shuffle_buffer_size: 1000
+
+# === Optimisation ===
+learning_rate: 5.e-4
+lr_scheduler_type: inverse_sqrt
+warmup_steps: 8000
+max_grad_norm: 1.0
+weight_decay: 0.005
+adam_beta1: 0.9
+adam_beta2: 0.98
+adam_epsilon: 1.e-6
+
+mse_ratio: 0.2
+dae_ratio: 0.02
+
+# === Précision numérique ===
+bf16: false
+fp16: true
+
+# === Configuration accélérateur ===
+accelerator_config:
+  split_batches: false
+  dispatch_batches: false
+  even_batches: true
+  use_seedable_sampler: true
+  non_blocking: false
