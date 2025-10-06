@@ -506,33 +506,3 @@ class DAEProcessor:
         
         return [tokens[0]] + rotated_middle + [tokens[-1]]
 
-
-# Example usage
-if __name__ == "__main__":
-    from transformers import AutoTokenizer
-    
-    # Initialize with a Hugging Face tokenizer
-    tokenizer = AutoTokenizer.from_pretrained("facebook/nllb-200-distilled-600M")
-    
-    # noiser = DatasetNoiser(
-    #     tokenizer=tokenizer,
-    #     mask_ratio=0.15,
-    #     random_ratio=0.1,
-    #     insert_ratio=0.1,
-    #     rotate_ratio=0.1,
-    #     permute_sentence_ratio=1.0
-    # )
-    
-    # Example input
-    text = "Hello world! This is a test sentence. Bonjour le monde! C'est une phrase de test."
-    input_ids = tokenizer(text, return_tensors="pt")["input_ids"][0].tolist()
-    
-    # Apply noise
-    # result = noiser(input_ids)
-    
-    # print("Original text:", text)
-    # print("Original IDs: ", input_ids)
-    # print("Target:       ", result['target'])
-    # print("Source:       ", result['source'])
-    # print("Target text:  ", tokenizer.decode(result['target']))
-    # print("Source text:  ", tokenizer.decode(result['source']))

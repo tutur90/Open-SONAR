@@ -533,7 +533,7 @@ class SONARForText2Text(M2M100ForConditionalGeneration):
 
         return super().generate(**kwargs)
     
-    def set_enconder_only(self):
+    def set_encoder_only(self):
         """
         Set the model to use only the encoder for encoding tasks.
         """
