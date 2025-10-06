@@ -342,8 +342,6 @@ class SONARModel(M2M100Model):
 
 class SONARForText2Text(M2M100ForConditionalGeneration):
     """SONAR model for conditional generation tasks."""
-    
-    # _tied_weights_keys = ["encoder.embed_tokens.weight", "decoder.embed_tokens.weight"]
 
     def __init__(self, config: M2M100Config):
         super().__init__(config)
@@ -356,7 +354,6 @@ class SONARForText2Text(M2M100ForConditionalGeneration):
         )
         
         self.mse_loss = nn.MSELoss()
-        
 
         self.mse_ratio = getattr(config, 'mse_ratio', 0.2)
         
@@ -535,6 +532,30 @@ class SONARForText2Text(M2M100ForConditionalGeneration):
         kwargs['decoder_input_ids'] = target_lang_ids.squeeze().unsqueeze(-1)
 
         return super().generate(**kwargs)
+    
+    def set_enconder_only(self):
+        """
+        Set the model to use only the encoder for encoding tasks.
+        """
+        del self.model.decoder
+        del self.lm_head
+        
+        def warning_function(*args, **kwargs):
+            raise ValueError("Decoder is not available. The model is set to encoder-only mode.")
+
+        self.model.decoder = lambda *args, **kwargs: warning_function(*args, **kwargs)
+        self.lm_head = lambda *args, **kwargs: warning_function(*args, **kwargs)
+
+    def set_decoder_only(self):
+        """
+        Set the model to use only the decoder for decoding tasks.
+        """
+        del self.model.encoder
+        
+        def warning_function(*args, **kwargs):
+            raise ValueError("Encoder is not available. The model is set to decoder-only mode.")
+        
+        self.model.encoder = lambda *args, **kwargs: warning_function(*args, **kwargs)
 
     def encode(self, input_ids: Optional[torch.LongTensor] = None, attention_mask: Optional[torch.Tensor] = None, **kwargs):
         """

@@ -7,6 +7,12 @@ from  transformers.models.nllb.tokenization_nllb_fast import NllbTokenizerFast a
 
 
 class NllbTokenizerFast(_NllbTokenizerFast):
+
+    def __init__(self, *args, src_lang="eng_Latn", tgt_lang="eng_Latn", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.src_lang = src_lang
+        self.tgt_lang = tgt_lang
+    
     def __call__(self, text, langs=None, langs_target=None, *args, **kwargs):
         
         # Check if self.src_lang attribute exists

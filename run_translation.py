@@ -76,9 +76,6 @@ require_version("datasets>=1.8.0", "To fix: pip install -r examples/pytorch/tran
 
 logger = logging.getLogger(__name__)
 
-MULTILINGUAL_TOKENIZERS = [MBartTokenizer, MBartTokenizerFast, MBart50Tokenizer, MBart50TokenizerFast, M2M100Tokenizer]
-
-
 
 
 def main():
@@ -276,24 +273,6 @@ def main():
     else:
         logger.info("There is nothing to do. Please pass `do_train`, `do_eval` and/or `do_predict`.")
         return
-
-    # For translation we set the codes of our source and target languages (only useful for mBART, the others will
-    # ignore those attributes).
-    if isinstance(tokenizer, tuple(MULTILINGUAL_TOKENIZERS)):
-        assert data_args.target_lang is not None and data_args.source_lang is not None, (
-            f"{tokenizer.__class__.__name__} is a multilingual tokenizer which requires --source_lang and "
-            "--target_lang arguments."
-        )
-
-        tokenizer.src_lang = data_args.source_lang
-        tokenizer.tgt_lang = data_args.target_lang
-
-        # For multilingual translation models like mBART-50 and M2M100 we need to force the target language token
-        # as the first generated token. We ask the user to explicitly provide this as --forced_bos_token argument.
-        forced_bos_token_id = (
-            tokenizer.lang_code_to_id[data_args.forced_bos_token] if data_args.forced_bos_token is not None else None
-        )
-        model.config.forced_bos_token_id = forced_bos_token_id
 
 
     # Check the whether the source target length fits in the model, if it has absolute positional embeddings
