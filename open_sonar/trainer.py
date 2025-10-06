@@ -161,101 +161,6 @@ class SONARTrainer(Trainer):
 
         return gen_config
     
-    # def training_step(self, model, inputs, num_items_in_batch = None):
-    #     if should_requeue:
-    #         logger.info("Requeuing the job...")
-    #         if self.accelerator.is_main_process:
-    #             self._save_checkpoint(model=None, trial=None)
-    #             logger.info("Checkpoint saved.")
-    #         exit(42)
-    #     return super().training_step(model, inputs, num_items_in_batch)
-
-    # def _get_dataloader(
-    #     self,
-    #     dataset: Dataset,
-    #     description: str,
-    #     batch_size: int,
-    #     sampler_fn: Optional[Callable[[Dataset], torch.utils.data.Sampler]] = None,
-    #     is_training: bool = False,
-    #     dataloader_key: Optional[str] = None,
-    # ) -> DataLoader:
-    #     """Create a [`~torch.utils.data.DataLoader`] from the given dataset."""
-
-    #     data_collator = self.data_collator
-    #     if is_datasets_available() and isinstance(dataset, datasets.Dataset):
-    #         dataset = self._remove_unused_columns(dataset, description=description)
-    #     else:
-    #         data_collator = self._get_collator_with_removed_columns(self.data_collator, description=description)
-
-    #     dataloader_params = {
-    #         "batch_size": batch_size,
-    #         "collate_fn": data_collator,
-    #         "num_workers": self.args.dataloader_num_workers,
-    #         "pin_memory": self.args.dataloader_pin_memory,
-    #         "persistent_workers": self.args.dataloader_persistent_workers,
-    #     }
-
-    #     if not isinstance(dataset, torch.utils.data.IterableDataset):
-    #         if sampler_fn is not None:
-    #             dataloader_params["sampler"] = sampler_fn(dataset)
-    #         dataloader_params["drop_last"] = self.args.dataloader_drop_last
-    #         dataloader_params["prefetch_factor"] = self.args.dataloader_prefetch_factor
-    #         if is_training:
-    #             dataloader_params["worker_init_fn"] = partial(
-    #                 seed_worker, num_workers=self.args.dataloader_num_workers, rank=self.args.process_index
-    #             )
-
-    #     dataloader = DataLoader(dataset, **dataloader_params)
-
-    #     # Accelerator.free_memory() will destroy the references, so
-    #     # we need to store the non-prepared version for eval dataloaders.
-    #     if dataloader_key is not None and self.args.dataloader_persistent_workers:
-    #         if hasattr(self, "_eval_dataloaders"):
-    #             self._eval_dataloaders[dataloader_key] = dataloader
-    #         else:
-    #             self._eval_dataloaders = {dataloader_key: dataloader}
-
-    #     return self.accelerator.prepare(dataloader)
-    
-    # def _get_train_sampler(self, train_dataset: Optional[Dataset] = None) -> Optional[torch.utils.data.Sampler]:
-    #     if train_dataset is None:
-    #         train_dataset = self.train_dataset
-    #     if train_dataset is None or not has_length(train_dataset):
-    #         return None
-
-    #     # Build the sampler.
-    #     if self.args.group_by_length:
-    #         if is_datasets_available() and isinstance(train_dataset, datasets.Dataset):
-    #             lengths = (
-    #                 train_dataset[self.args.length_column_name]
-    #                 if self.args.length_column_name in train_dataset.column_names
-    #                 else None
-    #             )
-    #         else:
-    #             lengths = None
-    #         model_input_name = (
-    #             self.processing_class.model_input_names[0] if self.processing_class is not None else None
-    #         )
-    #         return LengthGroupedSampler(
-    #             self.args.train_batch_size * self.args.gradient_accumulation_steps,
-    #             dataset=train_dataset,
-    #             lengths=lengths,
-    #             model_input_name=model_input_name,
-    #         )
-
-    #     else:
-    #         return RandomSampler(train_dataset)
-
-    #     # Accelerator.free_memory() will destroy the references, so
-    #     # we need to store the non-prepared version for eval dataloaders.
-    #     if dataloader_key is not None and self.args.dataloader_persistent_workers:
-    #         if hasattr(self, "_eval_dataloaders"):
-    #             self._eval_dataloaders[dataloader_key] = dataloader
-    #         else:
-    #             self._eval_dataloaders = {dataloader_key: dataloader}
-
-    #     return self.accelerator.prepare(dataloader)
-    
     def get_specific_parameter_names(self, model: nn.Module) -> list[str]:  
         """
         Returns a list of parameter names that will be optimized with the specific weight decay.
@@ -269,10 +174,9 @@ class SONARTrainer(Trainer):
                 if param_name in n and p.requires_grad:
                     specific_parameters.append(n)
                     
-        # print("All parameters:", [n for n, p in model.named_parameters() if p.requires_grad])
 
-        print("Specific parameters:", specific_parameters)
-        
+        logger.info("Specific parameters: %s", specific_parameters)
+
         return specific_parameters
 
     def create_optimizer(self):
@@ -572,10 +476,9 @@ class SONARTrainer(Trainer):
             generation_inputs = {
                 k: v for k, v in inputs.items() if k not in ("decoder_input_ids", "decoder_attention_mask")
             }
-            
-        generation_inputs["decoder_input_ids"] = generation_inputs["labels"][:, :1] if has_labels else None
-        generation_inputs["decoder_attention_mask"] = torch.ones_like(generation_inputs["decoder_input_ids"]) if has_labels else None
-        
+
+        generation_inputs["target_lang_ids"] = generation_inputs["labels"][:, 1] if has_labels else None
+
         if "target_ids" in generation_inputs:
             generation_inputs.pop("target_ids")
 

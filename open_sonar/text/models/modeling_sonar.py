@@ -364,9 +364,9 @@ class SONARForText2Text(M2M100ForConditionalGeneration):
         self,
         input_ids: Optional[torch.LongTensor] = None,
         attention_mask: Optional[torch.Tensor] = None,
-        target_ids: Optional[torch.LongTensor] = None,
-        target_attention_mask: Optional[torch.Tensor] = None,
-        mse_mask: Optional[torch.Tensor] = None,
+        target_ids: Optional[torch.LongTensor] = None, # IDs of target inputs only for MSE loss computation
+        target_attention_mask: Optional[torch.Tensor] = None, # Attention mask of target inputs only for MSE loss computation
+        mse_mask: Optional[torch.Tensor] = None, # Mask to apply on the MSE loss computation for paired inputs (1 for if regular input, 0 for noised input)
         decoder_input_ids: Optional[torch.LongTensor] = None,
         decoder_attention_mask: Optional[torch.LongTensor] = None,
         head_mask: Optional[torch.Tensor] = None,
@@ -453,28 +453,28 @@ class SONARForText2Text(M2M100ForConditionalGeneration):
         )
         lm_logits = self.lm_head(outputs[0])
         
-        masked_lm_loss = None
+        
+        loss = None
+
+        # COompute the cross-entropy loss if labels are provided, if 
         if labels is not None:
-
             labels = labels.to(lm_logits.device)
+            mt_loss = self.cross_entropy_loss(lm_logits.view(-1, self.config.vocab_size), labels.view(-1))
+            loss = mt_loss
 
-            masked_lm_loss = self.cross_entropy_loss(lm_logits.view(-1, self.config.vocab_size), labels.view(-1))
-            
-            # print(f"Cross Entropy Loss: {masked_lm_loss if masked_lm_loss is not None else 'N/A'}")
-
-            masked_lm_loss = masked_lm_loss.mean()
-
+        # Compute the MSE loss in the case of paired inputs (when mse_mask is provided)
         if mse_mask is not None and target_ids is None:
             mse_mask = mse_mask.view(-1, 1, 1).to(outputs.encoder_last_hidden_state.device)
             encoder_outputs = outputs.encoder_last_hidden_state.squeeze()
             batch_size = encoder_outputs.size(0)
     
-            # Reshape to pair structure: [batch//2, 2, seq_len, hidden]
             paired = encoder_outputs[:batch_size//2*2].view(batch_size//2, 2, *encoder_outputs.shape[1:]) * mse_mask
 
             mse_loss = self.mse_loss(paired[:, 0], paired[:, 1])
-            masked_lm_loss += self.mse_ratio * mse_loss
+            
+            loss += self.mse_ratio * mse_loss
 
+        # Compute the MSE loss in the case of not paired inputs (target_ids should be provided)
         if target_ids is not None and labels is not None:
 
             target_ids = target_ids.to(lm_logits.device)
@@ -486,17 +486,15 @@ class SONARForText2Text(M2M100ForConditionalGeneration):
 
             mse_loss = self.mse_loss(outputs.encoder_last_hidden_state, target_encoder_outputs.last_hidden_state)
 
-            masked_lm_loss += self.mse_ratio * mse_loss
-            
-        # print(f"Masked LM Loss: {masked_lm_loss.item() if masked_lm_loss is not None else 'N/A'}")
-        # print(f"MSE Loss: {mse_loss.item() if mse_loss is not None else 'N/A'}")
+            loss += self.mse_ratio * mse_loss
+
 
         if not return_dict:
             output = (lm_logits,) + outputs[1:]
-            return ((masked_lm_loss,) + output) if masked_lm_loss is not None else output
+            return ((loss,) + output) if loss is not None else output
 
         return Seq2SeqLMOutput(
-            loss=masked_lm_loss,
+            loss=loss,
             logits=lm_logits,
             past_key_values=outputs.past_key_values,
             decoder_hidden_states=outputs.decoder_hidden_states,
@@ -506,7 +504,71 @@ class SONARForText2Text(M2M100ForConditionalGeneration):
             encoder_hidden_states=outputs.encoder_hidden_states,
             encoder_attentions=outputs.encoder_attentions,
         )
+
+    def generate(self, target_lang_ids: Union[int, list, torch.Tensor] = 256047, **kwargs) -> torch.LongTensor:
+
+        """
+        Generate sequences of token ids for each example in the batch, given the model and the input ids.
+        Args:
+            target_lang_ids (int, list, or torch.Tensor): Language ID(s) for the target language.
+                Can be a single integer (same language for all examples), a list of integers (one per example),
+                or a tensor of shape (batch_size,). Defaults to 256047 (English).
+            **kwargs: Additional keyword arguments passed to the underlying generate method.
+        Returns:
+            torch.LongTensor: Generated sequences of token ids.
+        """
         
+        if 'decoder_input_ids' in kwargs:
+            raise ValueError("decoder_input_ids should not be provided for generation.")
+        
+        if type(target_lang_ids) is int:
+            target_lang_ids = torch.tensor([target_lang_ids], device=self.device)
+        elif type(target_lang_ids) is list:
+            target_lang_ids = torch.tensor(target_lang_ids, device=self.device)
+        elif type(target_lang_ids) is torch.Tensor:
+            target_lang_ids = target_lang_ids.to(self.device)
+            
+        batch_size = kwargs['input_ids'].size(0) if 'input_ids' in kwargs else kwargs['encoder_outputs'].last_hidden_state.size(0)
+        if target_lang_ids.size(0) == 1 and batch_size > 1:
+            target_lang_ids = target_lang_ids.expand(batch_size)
+
+        kwargs['decoder_input_ids'] = target_lang_ids.squeeze().unsqueeze(-1)
+
+        return super().generate(**kwargs)
+
+    def encode(self, input_ids: Optional[torch.LongTensor] = None, attention_mask: Optional[torch.Tensor] = None, **kwargs):
+        """
+        Encode the given input IDs into embeddings.
+        """
+        encoder_outputs = self.model.encoder(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            return_dict=True,
+            **kwargs
+        )
+        return encoder_outputs.last_hidden_state.squeeze()
+
+    def decode(self, encoder_outputs: Optional[torch.Tensor] = None, target_lang_ids: int = 256047, **kwargs):
+        """
+        Decode the given encoder outputs (embedings) into target language IDs.
+        """
+
+        if encoder_outputs is None:
+            raise ValueError("encoder_outputs should be provided for decoding.")
+        else:
+            if len(encoder_outputs.size()) == 2:
+                encoder_outputs = encoder_outputs.unsqueeze(1)
+
+        decoder_outputs = self.generate(
+            input_ids=None,
+            encoder_outputs=encoder_outputs,
+            target_lang_ids=target_lang_ids,
+            encoder_outputs=BaseModelOutput(last_hidden_state=encoder_outputs),
+        )
+        
+        return decoder_outputs
+
+
     @classmethod
     def from_m2m100_pretrained(cls, pretrained_model_name_or_path: str, *model_args, **kwargs):
         model = M2M100ForConditionalGeneration.from_pretrained(pretrained_model_name_or_path, *model_args, **kwargs)
