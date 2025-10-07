@@ -319,7 +319,6 @@ def main():
     noiser = DAEProcessor(
         tokenizer=tokenizer,
         key_input="target_ids",
-        
         mask_ratio=0.3,
         insert_ratio=0.1,
         permute_sentence_ratio=0.2,

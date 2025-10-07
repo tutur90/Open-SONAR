@@ -44,12 +44,9 @@ shuffle_buffer_size: 1000
 dataloader_num_workers: 0
 dataloader_drop_last: false
 dataloader_pin_memory : true
-# === Optimisation ===
-<<<<<<< HEAD:configs/sonar_finetune.yaml
-learning_rate: 4.e-3
-=======
+
+
 learning_rate: 8.e-4
->>>>>>> optimized:configs/training/text/sonar.yaml
 lr_scheduler_type: inverse_sqrt
 warmup_steps: 8000
 max_grad_norm: 1.0
@@ -61,11 +58,9 @@ adam_epsilon: 1.e-6
 mse_ratio: 0.2
 dae_ratio: 0.02
 
-# === Précision numérique ===
 bf16: false
 fp16: true
 
-# === Configuration accélérateur ===
 accelerator_config:
   split_batches: false
   dispatch_batches: false
