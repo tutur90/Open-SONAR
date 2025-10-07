@@ -2,8 +2,6 @@
 #SBATCH --job-name=eval
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
-##SBATCH --cpus-per-task=5
-##SBATCH --mem-per-cpu=11G # Important to enable "mix" use of GPUs across cluster users
 #SBATCH --mem=256G
 #SBATCH --partition=All
 #SBATCH --gpus-per-node=4

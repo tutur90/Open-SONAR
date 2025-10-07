@@ -4,7 +4,28 @@ Reproduction of the training pipeline "SONAR: Sentence-Level Multimodal and Lang
 
 ## Getting started
 
+### Data
 
+You will need to download the datasets (Primary and Mined of [NLLB](https://arxiv.org/abs/2207.04672)), source can be found in the scripts, to download all datasets run:
+
+
+```
+bash data/download_datasets.sh
+```
+
+Then backtranslate if needed. Recommended such there is missing lang in the initial data:
+
+```
+bash data/backtranslate.sh
+```
+
+You will need to adapt `scripts/text/backtranslate.sbatch` and `configs/generation/backtranslate.yaml` to your specific needs, such as adjusting resource allocations or changing the backtranslation model.
+
+Finally preprocess the data:
+
+```
+bash data/preprocess.sh
+```
 
 ## Running jobs
 

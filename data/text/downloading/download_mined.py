@@ -312,7 +312,8 @@ def create_argument_parser() -> argparse.ArgumentParser:
     return parser
 
 def main() -> None:
-    """Main entry point."""
+    """Data source: https://huggingface.co/datasets/allenai/nllb"""
+    
     parser = create_argument_parser()
     args = parser.parse_args()
     

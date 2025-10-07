@@ -1,15 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=download_data
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
-##SBATCH --cpus-per-gpu=4
-##SBATCH --mem-per-cpu=11G # Important to enable "mix" use of GPUs across cluster users
-#SBATCH --partition=multigpu,All
-#SBATCH --gpus-per-node=4
+#SBATCH --ntasks-per-node=1
+#SBATCH --partition=All
+#SBATCH --cpus-per-node=64
 #SBATCH --output=logs/%x-%j.out
 #SBATCH --err=logs/%x-%j.err
 #SBATCH --time=1-00:00:00
-#SBATCH --constraint=gpu_mem_40
 #SBATCH --open-mode=append
 
 

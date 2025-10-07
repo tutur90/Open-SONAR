@@ -189,7 +189,7 @@ def download_and_prepare_seed_dataset(output_directory: str, num_shards: int = 2
 
 
 def main():
-    """Main execution function."""
+    """Data source: https://huggingface.co/datasets/openlanguagedata/oldi_seed"""
     import argparse
 
     parser = argparse.ArgumentParser(description="Process the seed dataset")

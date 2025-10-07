@@ -1,9 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=data_process
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
+#SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=64
-##SBATCH --mem-per-cpu=11G # Important to enable "mix" use of GPUs across cluster users
 #SBATCH --mem=256G
 #SBATCH --partition=All
 #SBATCH --gpus-per-node=0
@@ -11,18 +10,9 @@
 #SBATCH --err=logs/%x-%j.err
 #SBATCH --time=1-00:00:00
 #SBATCH --open-mode=append
-#SBATCH --container registry.gitlab.tech.orange/arthur.garon/hfsonar/snapshot:zero
-#SBATCH --container-mounts ./:/workdir,/opt/marcel-c3/workdir/ygyd8053
-
-pip install polars
-pip install polars-u64-idx
 
 
 echo "Starting data processing with $SLURM_CPUS_PER_TASK CPUs"
-
-# HF_ENDPOINT="https://repos.tech.orange/artifactory/api/huggingfaceml/huggingface-proxy"
-# export HF_ENDPOINT
-
 
 
 CACHE_DIR="data/.cache"
@@ -59,7 +49,7 @@ python $SCRIPTS_DIR/processing/length_filter.py --dataset_path "datasets/flores2
 
 # #### LID Processing
 
-pip install fasttext_parallel # Requires python <=3.11
+pip install fasttext_parallel # Requires python <=3.11 with pip associated to that version
 
 python $SCRIPTS_DIR/processing/lid_processing.py \
     --input_files $CACHE_DIR/processing/length_filtered/mined --output_path $CACHE_DIR/processing/lid_processed/mined

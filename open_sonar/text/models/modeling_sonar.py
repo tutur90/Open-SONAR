@@ -535,7 +535,7 @@ class SONARForText2Text(M2M100ForConditionalGeneration):
     
     def set_encoder_only(self):
         """
-        Set the model to use only the encoder for encoding tasks.
+        Set the model to use only the encoder for encoding tasks. Deletes the decoder and lm_head to save memory.
         """
         del self.model.decoder
         del self.lm_head
@@ -548,7 +548,7 @@ class SONARForText2Text(M2M100ForConditionalGeneration):
 
     def set_decoder_only(self):
         """
-        Set the model to use only the decoder for decoding tasks.
+        Set the model to use only the decoder for decoding tasks. Deletes the encoder to save memory.
         """
         del self.model.encoder
         
